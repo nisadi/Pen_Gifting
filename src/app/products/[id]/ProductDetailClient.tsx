@@ -66,7 +66,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt1-1.png", "/shirts/shirt1-2.png", "/shirts/shirt1-3.png", "/shirts/shirt1-4.png"],
+    gallery: ["/shirts/shirts1-1.png", "/shirts/shirts1-2.png", "/shirts/shirts1-3.png",],
     description: "Elevate your wardrobe with this Classic White and Blue Premium Check Shirt. Featuring a timeless check design and regular fit, this shirt is perfect for both office and casual outings.",
     features: [
       "Classic check design pattern",
@@ -89,7 +89,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt2-1.png", "/shirts/shirt2-2.png", "/shirts/shirt2-3.png", "/shirts/shirt2-4.png"],
+    gallery: ["/shirts/shirts2-1.png", "/shirts/shirts2-2.png", "/shirts/shirts2-3.png", "/shirts/shirts2-4.png"],
     description: "Make a sophisticated statement with this Classic Grey Check Premium Shirt. The micro check design in grey, white, and navy creates a refined look suitable for any occasion.",
     features: [
       "Micro check design pattern",
