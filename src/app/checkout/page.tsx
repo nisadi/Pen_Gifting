@@ -5,8 +5,6 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/components/CartContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, ChangeEvent } from "react";
-import { SRI_LANKA_LOCATIONS } from "@/data/sri_lanka_locations";
-import emailjs from "@emailjs/browser";
 
 function CheckoutContent() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -156,100 +154,124 @@ function CheckoutContent() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [notificationResults, setNotificationResults] = useState<{ whatsapp?: any; email?: any } | null>(null);
+  const [showWhatsAppConfirm, setShowWhatsAppConfirm] = useState(false);
 
-  const handleProceedToPay = async () => {
-    try {
-      if (!validateForm()) {
-        return;
-      }
-
-      if (!items || !Array.isArray(items) || items.length === 0) {
-        alert("Your order list is empty. Please add items to your cart before placing an order.");
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      // Call backend API for server-side order creation, validation, & notification pipeline
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          customerInfo: formData
-        })
-      });
-
-      const data = await res.json();
-      console.log("[Checkout Frontend] Server order response:", data);
-
-      if (!res.ok || !data.success) {
-        setIsSubmitting(false);
-        alert(data.error || "Failed to place order. Please check your information and try again.");
-        return;
-      }
-
-      const generatedOrderId = data.orderId || `PG-ORD-${Date.now().toString(36).toUpperCase()}`;
-      setPlacedOrderId(generatedOrderId);
-      setNotificationResults(data.notifications || null);
-
-      // Also trigger browser EmailJS as client fallback if email is provided
-      if (formData.email) {
-        try {
-          const deliveryFee = 500;
-          const computedSubtotal = items.reduce((sum, item: any) => {
-            const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
-            const q = Math.max(1, Number(item?.quantity) || 1);
-            return sum + p * q;
-          }, 0);
-          const totalWithDelivery = computedSubtotal > 0 ? computedSubtotal + deliveryFee : 0;
-          const orderedDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          const orderItemsSummary = items.map((item: any) => {
-            const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
-            const q = Math.max(1, Number(item?.quantity) || 1);
-            const details = [
-              item?.selectedSize ? `Size: ${item.selectedSize}` : null,
-              item?.selectedColor ? `Color: ${item.selectedColor}` : null,
-              `Qty: ${q}`
-            ].filter(Boolean).join(", ");
-            return `${item?.name || "Item"} (${details}) - Rs.${p.toLocaleString()}`;
-          }).join("\n");
-
-          await emailjs.send(
-            "service_alm7rgg",
-            "template_efvm3i5",
-            {
-              name: formData.fullName,
-              phone: formData.phone,
-              email: formData.email,
-              address: liveAddress,
-              order: `Order ID: ${generatedOrderId}\n\n${orderItemsSummary}`,
-              total: totalWithDelivery,
-              date: orderedDate
-            },
-            "IdzwzMw0_Z1I4vmAn"
-          );
-        } catch (emailErr) {
-          console.warn("[Checkout Frontend] Optional client EmailJS notification attempt:", emailErr);
-        }
-      }
-
-      // Clear the shopping cart
-      clearCart();
-      setIsSubmitting(false);
-      setShowSuccess(true);
-
-    } catch (err) {
-      setIsSubmitting(false);
-      console.error("[Checkout Frontend] Error in handleProceedToPay:", err);
-      alert("An unexpected error occurred while placing your order. Please try again.");
+  const handlePlaceOrderClick = () => {
+    if (!validateForm()) {
+      return;
     }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      alert("Your order list is empty. Please add items to your cart before placing an order.");
+      return;
+    }
+
+    setShowWhatsAppConfirm(true);
+  };
+
+  const generateOrderMessage = () => {
+    const deliveryFee = 500;
+    const computedSubtotal = items.reduce((sum, item: any) => {
+      const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
+      const q = Math.max(1, Number(item?.quantity) || 1);
+      return sum + p * q;
+    }, 0);
+    const totalWithDelivery = computedSubtotal > 0 ? computedSubtotal + deliveryFee : 0;
+
+    let message = `Thank you for your order!\n\n`;
+    message += `Order Details\n`;
+    message += `------------------------\n\n`;
+    message += `Customer Name: ${formData.fullName}\n`;
+    message += `Phone: ${formData.phone}\n`;
+    if (formData.email) message += `Email: ${formData.email}\n`;
+    
+    message += `\nDelivery Address:\n`;
+    message += `${formData.address},\n`;
+    message += `${formData.district},\n`;
+    message += `${formData.province}\n\n`;
+    
+    message += `Items\n`;
+    message += `------------------------\n`;
+
+    items.forEach((item: any) => {
+      const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
+      const q = Math.max(1, Number(item?.quantity) || 1);
+      
+      message += `\n• ${item.name || "Item"}\n`;
+      message += `  Quantity: ${q}\n`;
+      if (item.selectedSize) message += `  Size: ${item.selectedSize}\n`;
+      if (item.selectedColor) message += `  Body Color: ${item.selectedColor}\n`;
+      if (item.inkColor) message += `  Ink Color: ${item.inkColor}\n`;
+      if (item.penType) message += `  Pen Type: ${item.penType}\n`;
+      if (item.personalization) message += `  Personalization: ${item.personalization}\n`;
+      message += `  Price: Rs. ${(p * q).toLocaleString()}\n`;
+    });
+
+    message += `\nSubtotal: Rs. ${computedSubtotal.toLocaleString()}\n`;
+    message += `Delivery Fee: Rs. ${deliveryFee.toLocaleString()}\n`;
+    message += `Grand Total: Rs. ${totalWithDelivery.toLocaleString()}\n\n`;
+    message += `Your order has been forwarded to our WhatsApp for confirmation.\n`;
+    message += `Our team will contact you shortly regarding delivery and payment.\n\n`;
+    message += `Thank you for shopping with us.`;
+
+    return message;
+  };
+
+  const handleContinueToWhatsApp = () => {
+    const orderMessage = generateOrderMessage();
+    
+    const encodedMessage = encodeURIComponent(orderMessage);
+    const whatsappUrl = `https://wa.me/94760364639?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, '_blank');
+
+    setShowWhatsAppConfirm(false);
+    clearCart();
+    setPlacedOrderId(`PG-WA-${Date.now().toString(36).toUpperCase()}`);
+    setShowSuccess(true);
   };
 
   return (
     <main className="bg-[#f5f1eb] min-h-screen flex flex-col relative">
       <Navbar />
+
+      {/* WhatsApp Confirmation Modal */}
+      {showWhatsAppConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-300">
+          <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-2xl text-center border border-[#d6c9b5] transform scale-100 transition-all duration-300">
+            <div className="w-16 h-16 bg-[#e8decb] text-[#25D366] rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+              <i className="fa-brands fa-whatsapp text-4xl"></i>
+            </div>
+            
+            <h3 className="text-2xl font-serif font-bold text-[#25D366] mb-4">
+              Complete via WhatsApp
+            </h3>
+            
+            <p className="text-gray-700 text-[15px] leading-relaxed mb-4 font-medium">
+              Your order will now be redirected to WhatsApp to complete the order and payment process with our team.
+            </p>
+
+            <p className="text-gray-600 text-[14px] leading-relaxed mb-8">
+              Your order details will be sent to our WhatsApp. Our team will confirm your order, delivery, and payment.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowWhatsAppConfirm(false)}
+                className="flex-1 bg-gray-100 text-gray-700 font-bold py-3.5 px-6 rounded-xl hover:bg-gray-200 transition shadow-sm focus:outline-none text-[15px]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleContinueToWhatsApp}
+                className="flex-1 bg-[#25D366] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#1ebd5a] transition shadow-md focus:outline-none text-[15px] flex items-center justify-center gap-2"
+              >
+                Continue to WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Order Placed Successfully Modal */}
       {showSuccess && (
@@ -607,20 +629,13 @@ function CheckoutContent() {
             </div>
 
             <button
-              onClick={handleProceedToPay}
+              onClick={handlePlaceOrderClick}
               disabled={isSubmitting}
               className={`bg-[#c5a35d] w-full py-3.5 rounded-lg text-[#7a2e2e] font-bold text-[16px] hover:bg-[#b8954f] hover:text-white transition focus:outline-none flex items-center justify-center gap-2 ${
                 isSubmitting ? "opacity-75 cursor-not-allowed" : ""
               }`}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-[#7a2e2e] border-t-transparent rounded-full animate-spin"></div>
-                  <span>Placing Order...</span>
-                </>
-              ) : (
-                "Place the Order"
-              )}
+              Place the Order
             </button>
 
           </div>
