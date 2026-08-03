@@ -185,7 +185,8 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(() => {
     const next = products.filter((product) => {
       const penTypeMatch =
-        selectedPenTypes.length === 0 || selectedPenTypes.includes(product.penType);
+        selectedPenTypes.length === 0 ||
+        (Boolean(product.penType) && selectedPenTypes.includes(product.penType!));
       const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
       const personalizationMatch =
         selectedPersonalization.length === 0 ||
@@ -193,14 +194,16 @@ export default function ProductsPage() {
       const priceMatch = product.priceValue >= minPrice && product.priceValue <= maxPrice;
       const itemColorMatch =
         selectedItemColors.length === 0 ||
-        selectedItemColors.some((color) =>
-          product.colors.map((c) => c.toLowerCase()).includes(color.toLowerCase())
-        );
+        (Boolean(product.colors) &&
+          selectedItemColors.some((color) =>
+            product.colors.map((c) => c.toLowerCase()).includes(color.toLowerCase())
+          ));
       const inkColorMatch =
         selectedInkColors.length === 0 ||
-        selectedInkColors.some((color) =>
-          product.inkColors.map((c) => c.toLowerCase()).includes(color.toLowerCase())
-        );
+        (Boolean(product.inkColors) &&
+          selectedInkColors.some((color) =>
+            product.inkColors!.map((c) => c.toLowerCase()).includes(color.toLowerCase())
+          ));
 
       return (
         penTypeMatch &&

@@ -112,7 +112,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt3-1.png", "/shirts/shirt3-2.png", "/shirts/shirt3-3.png", "/shirts/shirt3-4.png"],
+    gallery: ["/shirts/shirts3-1.png", "/shirts/shirts3-2.png"],
     description: "Stay fresh and stylish with this Sky Blue Check Premium Shirt. The classic windowpane check pattern and breathable 100% cotton fabric make it an essential addition to any wardrobe.",
     features: [
       "Classic windowpane check pattern",
@@ -134,7 +134,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt4-1.png", "/shirts/shirt4-2.png", "/shirts/shirt4-3.png", "/shirts/shirt4-4.png"],
+    gallery: ["/shirts/shirts4-1.png", "/shirts/shirts4-2.png", "/shirts/shirts4-3.png"],
     description: "Add a touch of classic elegance with this Navy Blue and White Plaid Premium Shirt. The traditional tartan check in navy, white, and green creates a timeless and versatile look.",
     features: [
       "Classic plaid/tartan check design",
@@ -156,7 +156,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt5-1.png", "/shirts/shirt5-2.png", "/shirts/shirt5-3.png", "/shirts/shirt5-4.png"],
+    gallery: ["/shirts/shirts5-1.png", "/shirts/shirts5-2.png", "/shirts/shirts5-3.png"],
     description: "Keep it simple and sophisticated with this Plain Light Esthetic Green Shirt. The clean, minimalist design and comfortable cotton fabric make it perfect for any occasion.",
     features: [
       "Plain design for minimalist style",
@@ -178,7 +178,7 @@ const products = [
     productType: "Shirt",
     brand: "Premium Collection",
     personalization: ["Not Available"],
-    gallery: ["/shirts/shirt6-1.png", "/shirts/shirt6-2.png", "/shirts/shirt6-3.png", "/shirts/shirt6-4.png"],
+    gallery: ["/shirts/shirts6-1.png", "/shirts/shirts6-2.png", "/shirts/shirts6-3.png", "/shirts/shirts6-4.png", "/shirts/shirts6-5.png", "/shirts/shirts6-6.png"],
     description: "Make a stylish impression with this Pink and White Vertical Stripe Premium Shirt. The classic vertical stripe design in blush pink and white, combined with premium linen fabric, creates a sophisticated look.",
     features: [
       "Classic vertical stripe design",
@@ -201,6 +201,46 @@ export default function ProductDetailClient({ productId }: { productId: string }
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors && product.colors.length > 0 ? product.colors[0] : null
   );
+
+  const isShirt =
+    product.productType?.toLowerCase() === "shirt" ||
+    (product as any).penType?.toLowerCase() === "shirt";
+  const availableSizes = isShirt
+    ? product.sizes && product.sizes.length > 0
+      ? product.sizes
+      : ["XS", "S", "M", "L", "XL", "XXL"]
+    : [];
+
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  const handleSelectSize = (size: string) => {
+    setSelectedSize(size);
+    setSizeError(null);
+  };
+
+  const validateAndGetItem = () => {
+    if (isShirt && !selectedSize) {
+      setSizeError("Please select a shirt size before continuing.");
+      return null;
+    }
+    setSizeError(null);
+
+    const itemId = `${product.id}${selectedColor ? `-${selectedColor}` : ""}${
+      selectedSize ? `-${selectedSize}` : ""
+    }`;
+
+    return {
+      id: itemId,
+      productId: product.id,
+      name: product.name,
+      price: Number(product.price.replace(/[^0-9]/g, "")),
+      image: product.image,
+      quantity: qty,
+      selectedColor: selectedColor || undefined,
+      selectedSize: selectedSize || undefined,
+    };
+  };
 
   // Use product.image as the main image, and product.gallery for thumbnails
   const [mainImage, setMainImage] = useState(product.image);
@@ -323,18 +363,43 @@ export default function ProductDetailClient({ productId }: { productId: string }
               )}
 
               {/* SIZES - For shirts */}
-              {product.sizes && product.sizes.length > 0 && (
+              {isShirt && (
                 <div className="mt-4">
-                  <p className="text-[13px] font-semibold text-[#7a2d2d]">
-                    Sizes:
-                  </p>
-                  <div className="flex gap-3 mt-2 flex-wrap">
-                    {product.sizes.map((size) => (
-                      <span key={size} className="px-3 py-1 border border-[#c5a25f] text-sm rounded-full text-[#7a2d2d]">
-                        {size}
+                  <div className="flex items-center justify-between max-w-[320px]">
+                    <p className="text-[13px] font-semibold text-[#7a2d2d]">
+                      Size:
+                    </p>
+                    {selectedSize && (
+                      <span className="text-[13px] font-medium text-black">
+                        Selected: <span className="font-bold text-[#7a2d2d]">{selectedSize}</span>
                       </span>
-                    ))}
+                    )}
                   </div>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {availableSizes.map((size) => {
+                      const isSelected = selectedSize === size;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => handleSelectSize(size)}
+                          className={`px-4 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 ${
+                            isSelected
+                              ? "bg-[#7a2d2d] text-white border-[#7a2d2d] shadow-sm scale-105"
+                              : "border-[#c5a25f] text-[#7a2d2d] hover:bg-[#c5a25f] hover:text-white"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {sizeError && (
+                    <p className="mt-2 text-xs font-semibold text-red-600 flex items-center gap-1">
+                      <i className="fa-solid fa-circle-exclamation"></i>
+                      {sizeError}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -398,13 +463,8 @@ export default function ProductDetailClient({ productId }: { productId: string }
               <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                 <button 
                   onClick={() => {
-                    const item = {
-                      id: product.id,
-                      name: product.name,
-                      price: Number(product.price.replace(/[^0-9]/g, "")),
-                      image: product.image,
-                      quantity: qty,
-                    };
+                    const item = validateAndGetItem();
+                    if (!item) return;
                     const query = encodeURIComponent(JSON.stringify(item));
                     router.push(`/checkout?buyNow=${query}`);
                   }}
@@ -413,15 +473,11 @@ export default function ProductDetailClient({ productId }: { productId: string }
                   Buy Now
                 </button>
                 <button
-                  onClick={() =>
-                    addToCart({
-                      id: product.id,
-                      name: product.name,
-                      price: Number(product.price.replace(/[^0-9]/g, "")),
-                      image: product.image,
-                      quantity: qty,
-                    })
-                  }
+                  onClick={() => {
+                    const item = validateAndGetItem();
+                    if (!item) return;
+                    addToCart(item);
+                  }}
                   className="flex-1 bg-[#c6a55c] text-[#7a2e2e] py-3 sm:py-2.5 text-sm font-semibold rounded-full cursor-pointer hover:bg-[#b8964f] transition flex items-center justify-center gap-2"
                 >
                   <i className="fa-solid fa-cart-shopping"></i> Add To Cart

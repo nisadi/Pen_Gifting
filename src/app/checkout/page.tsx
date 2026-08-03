@@ -59,28 +59,66 @@ function CheckoutContent() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    province: "",
+    province: "Western Province",
     phone: "",
     district: "",
     address: ""
   });
 
-  const handleSave = () => {
-    // 1. Basic non-empty validation
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.address.trim()) {
-      alert("Please fill in all required fields (Name, Phone, and Address) before saving.");
-      return;
+  const [errors, setErrors] = useState({
+    fullName: "",
+    phone: "",
+    district: "",
+    address: "",
+    email: ""
+  });
+
+  const WESTERN_PROVINCE_DISTRICTS = ["Colombo", "Gampaha", "Kalutara"];
+
+  const validateForm = () => {
+    const newErrors = {
+      fullName: "",
+      phone: "",
+      district: "",
+      address: "",
+      email: ""
+    };
+    let isValid = true;
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full Name is required.";
+      isValid = false;
     }
 
-    // 2. Email validation (if provided)
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone Number is required.";
+      isValid = false;
+    } else if (!/^(?:\+94|0)?7[0-9]{8}$/.test(formData.phone.trim())) {
+      newErrors.phone = "Please enter a valid Sri Lankan phone number (e.g., 07XXXXXXXX).";
+      isValid = false;
+    }
+
+    if (!formData.district.trim()) {
+      newErrors.district = "Please select a district.";
+      isValid = false;
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Please enter your address.";
+      isValid = false;
+    }
+
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      alert("Please enter a valid email address (e.g., name@example.com).");
-      return;
+      newErrors.email = "Please enter a valid email address (e.g., name@example.com).";
+      isValid = false;
     }
 
-    // 3. Phone validation (Sri Lankan mobile format)
-    if (!/^(?:\+94|0)?7[0-9]{8}$/.test(formData.phone.trim())) {
-      alert("Please enter a valid Sri Lankan phone number (e.g., 07XXXXXXXX).");
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) {
       return;
     }
 
@@ -92,78 +130,77 @@ function CheckoutContent() {
     setIsEditable(true);
   };
 
-  const handleProvinceChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      province: e.target.value,
-      district: ""
-    });
-  };
-
   const handleDistrictChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setFormData({
       ...formData,
       district: e.target.value
     });
+    if (errors.district) {
+      setErrors({ ...errors, district: "" });
+    }
   };
 
-  const liveAddress = [formData.district, formData.province, formData.address].filter(Boolean).join(", ");
+  const liveAddress = [formData.address, formData.district, formData.province].filter(Boolean).join(", ");
 
-  const getInputClass = () => `w-full border border-gray-500 rounded-md p-2.5 text-black placeholder-gray-400 text-[13px] focus:outline-none focus:border-black transition-colors ${isEditable ? 'bg-[#e8f0fe] opacity-100' : 'bg-transparent opacity-60 cursor-not-allowed'}`;
-  const getSelectClass = (val: string) => `w-full border border-gray-500 rounded-md p-2.5 text-[13px] appearance-none focus:outline-none focus:border-black transition-colors ${isEditable ? 'bg-[#e8f0fe] opacity-100 ' + (val ? 'text-black' : 'text-gray-400') : 'bg-transparent opacity-60 cursor-not-allowed text-gray-500'}`;
+  const getInputClass = (hasError = false) =>
+    `w-full border ${hasError ? 'border-red-500' : 'border-gray-500'} rounded-md p-2.5 text-black placeholder-gray-400 text-[13px] focus:outline-none focus:border-black transition-colors ${
+      isEditable ? 'bg-[#e8f0fe] opacity-100' : 'bg-transparent opacity-60 cursor-not-allowed'
+    }`;
+
+  const getSelectClass = (val: string, hasError = false) =>
+    `w-full border ${hasError ? 'border-red-500' : 'border-gray-500'} rounded-md p-2.5 text-[13px] appearance-none focus:outline-none focus:border-black transition-colors ${
+      isEditable ? 'bg-[#e8f0fe] opacity-100 ' + (val ? 'text-black' : 'text-gray-400') : 'bg-transparent opacity-60 cursor-not-allowed text-gray-500'
+    }`;
 
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleProceedToPay = async () => {
-  if (!formData.fullName.trim() || !formData.phone.trim() || !formData.address.trim()) {
-    alert("Please fill in all required contact details before proceeding.");
-    return;
-  }
+    if (!validateForm()) {
+      return;
+    }
 
-  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    alert("Invalid email format. Please edit your contact info.");
-    return;
-  }
+    const orderItems = items.map(item => {
+      const details = [
+        item.selectedSize ? `Size: ${item.selectedSize}` : null,
+        item.selectedColor ? `Color: ${item.selectedColor}` : null,
+        `Qty: ${item.quantity}`
+      ].filter(Boolean).join(", ");
+      return `${item.name} (${details}) - Rs.${item.price.toLocaleString()}`;
+    }).join("\n");
 
-  if (!/^(?:\+94|0)?7[0-9]{8}$/.test(formData.phone.trim())) {
-    alert("Invalid phone number. Please enter a valid Sri Lankan number.");
-    return;
-  }
+    const deliveryFee = 500;
+    const totalWithDelivery = total > 0 ? total + deliveryFee : 0;
 
-  const orderItems = items.map(item =>
-    `${item.name} (Qty: ${item.quantity}) - Rs.${item.price.toLocaleString()}`
-  ).join("\n");
+    const orderedDate = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
 
-  const totalWithDelivery = total + 200;
+    const fullShippingAddress = liveAddress;
 
-  const orderedDate = new Date().toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+    try {
+      // ✅ SEND EMAIL FIRST
+      await emailjs.send(
+        "service_alm7rgg",
+        "template_efvm3i5",
+        {
+          name: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          address: fullShippingAddress,
+          order: orderItems,
+          total: totalWithDelivery,
+          date: orderedDate
+        },
+        "IdzwzMw0_Z1I4vmAn"
+      );
 
-  try {
-    // ✅ SEND EMAIL FIRST
-    await emailjs.send(
-      "service_alm7rgg",
-      "template_efvm3i5",
-      {
-        name: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        order: orderItems,
-        total: totalWithDelivery,
-        date: orderedDate
-      },
-      "IdzwzMw0_Z1I4vmAn"
-    );
+      // ✅ SHOW SUCCESS UI
+      setShowSuccess(true);
 
-    // ✅ SHOW SUCCESS UI
-    setShowSuccess(true);
-
-    // ✅ WHATSAPP MESSAGE
-    const message = `🛒 *New Order*
+      // ✅ WHATSAPP MESSAGE
+      const message = `🛒 *New Order*
 
 Date: ${orderedDate}
 Name: ${formData.fullName}
@@ -174,23 +211,25 @@ Order Details:
 
 ${orderItems}
 
-Address:
-${formData.address}
+Shipping Address:
+${fullShippingAddress}
 
+Subtotal: Rs.${total.toLocaleString()}
+Delivery Fee: Rs.${deliveryFee}
 Total: Rs.${totalWithDelivery.toLocaleString()}`;
 
-    const whatsappUrl = `https://wa.me/94776706481?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/94776706481?text=${encodeURIComponent(message)}`;
 
-    setTimeout(() => {
-      window.open(whatsappUrl, "_blank");
-      setShowSuccess(false);
-    }, 1500);
+      setTimeout(() => {
+        window.open(whatsappUrl, "_blank");
+        setShowSuccess(false);
+      }, 1500);
 
-  } catch (error) {
-    console.error(error);
-    alert("Failed to send order. Please try again.");
-  }
-};
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send order. Please try again.");
+    }
+  };
 
   return (
     <main className="bg-[#f5f1eb] min-h-screen flex flex-col relative">
@@ -227,95 +266,136 @@ Total: Rs.${totalWithDelivery.toLocaleString()}`;
 
               {/* Row 1 */}
               <div>
-                <label className="block text-[13px] text-black font-semibold mb-1.5 border-b-0">Full Name</label>
+                <label className="block text-[13px] text-black font-semibold mb-1.5 border-b-0">
+                  Full Name <span className="text-red-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, fullName: e.target.value });
+                    if (errors.fullName) setErrors({ ...errors, fullName: "" });
+                  }}
                   disabled={!isEditable}
                   placeholder="Enter Your Name"
-                  className={getInputClass()}
+                  className={getInputClass(Boolean(errors.fullName))}
                   required
                 />
+                {errors.fullName && (
+                  <p className="text-red-600 text-[12px] mt-1 flex items-center gap-1">
+                    <i className="fa-solid fa-circle-exclamation text-[11px]"></i>
+                    {errors.fullName}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-[13px] text-black font-semibold mb-1.5 border-b-0">Email</label>
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (errors.email) setErrors({ ...errors, email: "" });
+                  }}
                   disabled={!isEditable}
                   placeholder="Enter Your Email"
-                  className={getInputClass()}
+                  className={getInputClass(Boolean(errors.email))}
                 />
+                {errors.email && (
+                  <p className="text-red-600 text-[12px] mt-1 flex items-center gap-1">
+                    <i className="fa-solid fa-circle-exclamation text-[11px]"></i>
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               {/* Row 2 */}
               <div>
-                <label className="block text-[13px] text-black font-semibold mb-1.5">Phone Number</label>
+                <label className="block text-[13px] text-black font-semibold mb-1.5">
+                  Phone Number <span className="text-red-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, phone: e.target.value });
+                    if (errors.phone) setErrors({ ...errors, phone: "" });
+                  }}
                   disabled={!isEditable}
                   placeholder="Enter Your Phone Number"
-                  className={getInputClass()}
+                  className={getInputClass(Boolean(errors.phone))}
                   required
                 />
+                {errors.phone && (
+                  <p className="text-red-600 text-[12px] mt-1 flex items-center gap-1">
+                    <i className="fa-solid fa-circle-exclamation text-[11px]"></i>
+                    {errors.phone}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-[13px] text-black font-semibold mb-1.5">Province</label>
-                <div className="relative">
-                  <select
-                    value={formData.province}
-                    onChange={handleProvinceChange}
-                    disabled={!isEditable}
-                    className={getSelectClass(formData.province)}
-                  >
-                    <option value="" disabled hidden>Choose Your Province</option>
-                    {SRI_LANKA_LOCATIONS.provinces.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                  <i className={`fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm ${isEditable ? 'text-gray-500' : 'text-gray-400 opacity-60'}`}></i>
-                </div>
+                <input
+                  type="text"
+                  value="Western Province"
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-400 rounded-md p-2.5 text-gray-700 bg-gray-200 text-[13px] cursor-not-allowed font-medium"
+                />
               </div>
 
-              {/* Row 3 - Only District now as Row 3 replaced Row 4's single item */}
+              {/* Row 3 - Only District */}
               <div>
-                <label className="block text-[13px] text-black font-semibold mb-1.5">District</label>
+                <label className="block text-[13px] text-black font-semibold mb-1.5">
+                  District <span className="text-red-500 font-bold">*</span>
+                </label>
                 <div className="relative">
                   <select
                     value={formData.district}
                     onChange={handleDistrictChange}
-                    disabled={!isEditable || !formData.province}
-                    className={getSelectClass(formData.district)}
+                    disabled={!isEditable}
+                    className={getSelectClass(formData.district, Boolean(errors.district))}
                   >
                     <option value="" disabled hidden>Choose Your District</option>
-                    {formData.province && SRI_LANKA_LOCATIONS.districts[formData.province as keyof typeof SRI_LANKA_LOCATIONS.districts]?.map(d => (
+                    {WESTERN_PROVINCE_DISTRICTS.map(d => (
                       <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
                   <i className={`fa-solid fa-caret-down absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm ${isEditable ? 'text-gray-500' : 'text-gray-400 opacity-60'}`}></i>
                 </div>
+                {errors.district && (
+                  <p className="text-red-600 text-[12px] mt-1 flex items-center gap-1">
+                    <i className="fa-solid fa-circle-exclamation text-[11px]"></i>
+                    {errors.district}
+                  </p>
+                )}
               </div>
 
-
-              {/* Row 5 */}
+              {/* Address */}
               <div className="md:col-span-2">
-                <label className="block text-[13px] text-black font-semibold mb-1.5">Address</label>
+                <label className="block text-[13px] text-black font-semibold mb-1.5">
+                  Address <span className="text-red-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, address: e.target.value });
+                    if (errors.address) setErrors({ ...errors, address: "" });
+                  }}
                   disabled={!isEditable}
                   placeholder="Type Here"
-                  className={getInputClass()}
+                  className={getInputClass(Boolean(errors.address))}
                   required
                 />
+                {errors.address && (
+                  <p className="text-red-600 text-[12px] mt-1 flex items-center gap-1">
+                    <i className="fa-solid fa-circle-exclamation text-[11px]"></i>
+                    {errors.address}
+                  </p>
+                )}
               </div>
             </div>
-
 
             {/* Action Buttons */}
             <div className="mt-10 flex gap-2 sm:gap-4">
@@ -357,6 +437,25 @@ Total: Rs.${totalWithDelivery.toLocaleString()}`;
 
                     <div className="flex-1">
                       <h3 className="text-black font-serif font-bold text-[16px] leading-tight">{item.name}</h3>
+                      {(item.selectedSize || item.selectedColor) && (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#5a5a5a] mt-1">
+                          {item.selectedSize && (
+                            <span>
+                              <span className="font-semibold text-[#7a2e2e]">Size:</span> {item.selectedSize}
+                            </span>
+                          )}
+                          {item.selectedColor && (
+                            <span className="flex items-center gap-1">
+                              <span className="font-semibold text-[#7a2e2e]">Color:</span>
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle"
+                                style={{ backgroundColor: item.selectedColor }}
+                                title={item.selectedColor}
+                              />
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="text-[#c5a35d] font-semibold text-[14px] mt-1">Rs.{item.price.toLocaleString()}</p>
                     </div>
 
@@ -453,12 +552,12 @@ Total: Rs.${totalWithDelivery.toLocaleString()}`;
 
             <div className="flex justify-between text-[#3f3f3f] text-[14px] mb-6">
               <span className="font-semibold">Delivery Fee</span>
-              <span className="font-semibold text-[#5a5a5a]">Rs. 200</span>
+              <span className="font-semibold text-[#5a5a5a]">LKR 500</span>
             </div>
 
             <div className="border-t border-[#d6c9b5] pt-5 mb-8 flex justify-between items-center">
               <span className="text-black font-bold text-[16px]">Total</span>
-              <span className="text-[#c5a35d] font-bold text-[16px]">LKR {(total > 0 ? total + 200 : 0).toLocaleString()}</span>
+              <span className="text-[#c5a35d] font-bold text-[16px]">LKR {(total > 0 ? total + 500 : 0).toLocaleString()}</span>
             </div>
 
             <button

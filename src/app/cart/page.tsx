@@ -109,6 +109,25 @@ export default function CartPage() {
                       {/* Details */}
                       <div className="flex-1 md:ml-4">
                         <h3 className="text-black font-serif font-bold text-[16px] leading-tight">{item.name}</h3>
+                        {(item.selectedSize || item.selectedColor) && (
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#5a5a5a] mt-1">
+                            {item.selectedSize && (
+                              <span>
+                                <span className="font-semibold text-[#7a2e2e]">Size:</span> {item.selectedSize}
+                              </span>
+                            )}
+                            {item.selectedColor && (
+                              <span className="flex items-center gap-1">
+                                <span className="font-semibold text-[#7a2e2e]">Color:</span>
+                                <span
+                                  className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle"
+                                  style={{ backgroundColor: item.selectedColor }}
+                                  title={item.selectedColor}
+                                />
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <p className="text-[#c6a55c] font-semibold text-[14px] mt-1">Rs.{item.price.toLocaleString()}</p>
                       </div>
 

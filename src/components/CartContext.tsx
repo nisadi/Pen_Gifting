@@ -1,13 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-type CartItem = {
+export type CartItem = {
   id: string;
+  productId: string;
   name: string;
   price: number;
   image: string;
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
 };
 
 type CartContextType = {
@@ -25,15 +28,54 @@ export const useCart = () => {
   return context;
 };
 
+const CART_STORAGE_KEY = "pen_gift_cart";
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load cart from localStorage on client mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          setCart(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load cart from localStorage", e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  // Save cart to localStorage whenever cart state changes
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      } catch (e) {
+        console.error("Failed to save cart to localStorage", e);
+      }
+    }
+  }, [cart, isLoaded]);
 
   const addToCart = (item: CartItem) => {
     setCart((prev) => {
-      const exist = prev.find((i) => i.id === item.id);
-      if (exist) {
-        return prev.map((i) =>
-          i.id === item.id
+      // Find existing item with exact same id or matching productId + color + size combination
+      const existIndex = prev.findIndex(
+        (i) =>
+          i.id === item.id ||
+          (i.productId === item.productId &&
+            (i.selectedColor || "") === (item.selectedColor || "") &&
+            (i.selectedSize || "") === (item.selectedSize || ""))
+      );
+
+      if (existIndex > -1) {
+        return prev.map((i, index) =>
+          index === existIndex
             ? { ...i, quantity: i.quantity + item.quantity }
             : i
         );
@@ -59,4 +101,4 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       {children}
     </CartContext.Provider>
   );
-}
+}
