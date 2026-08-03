@@ -11,6 +11,9 @@ export type CartItem = {
   quantity: number;
   selectedColor?: string;
   selectedSize?: string;
+  penType?: string;
+  inkColor?: string;
+  personalization?: string;
 };
 
 type CartContextType = {
@@ -18,6 +21,7 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -96,8 +100,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const clearCart = () => {
+    setCart([]);
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch (e) {
+      console.error("Failed to clear cart in localStorage", e);
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );

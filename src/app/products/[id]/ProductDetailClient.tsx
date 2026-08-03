@@ -230,6 +230,14 @@ export default function ProductDetailClient({ productId }: { productId: string }
       selectedSize ? `-${selectedSize}` : ""
     }`;
 
+    const penType = (product as any).penType || undefined;
+    const inkColor = (product as any).inkColors && (product as any).inkColors.length > 0
+      ? (product as any).inkColors.join(", ")
+      : undefined;
+    const personalization = (product as any).personalization && (product as any).personalization.length > 0 && !(product as any).personalization.includes("Not Available")
+      ? (product as any).personalization.join(", ")
+      : undefined;
+
     return {
       id: itemId,
       productId: product.id,
@@ -239,6 +247,9 @@ export default function ProductDetailClient({ productId }: { productId: string }
       quantity: qty,
       selectedColor: selectedColor || undefined,
       selectedSize: selectedSize || undefined,
+      penType,
+      inkColor,
+      personalization,
     };
   };
 

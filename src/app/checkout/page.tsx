@@ -3,13 +3,14 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/components/CartContext";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, ChangeEvent } from "react";
 import { SRI_LANKA_LOCATIONS } from "@/data/sri_lanka_locations";
 import emailjs from "@emailjs/browser";
 
 function CheckoutContent() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const isBuyNow = searchParams.has("buyNow");
@@ -153,81 +154,96 @@ function CheckoutContent() {
     }`;
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notificationResults, setNotificationResults] = useState<{ whatsapp?: any; email?: any } | null>(null);
 
   const handleProceedToPay = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    const orderItems = items.map(item => {
-      const details = [
-        item.selectedSize ? `Size: ${item.selectedSize}` : null,
-        item.selectedColor ? `Color: ${item.selectedColor}` : null,
-        `Qty: ${item.quantity}`
-      ].filter(Boolean).join(", ");
-      return `${item.name} (${details}) - Rs.${item.price.toLocaleString()}`;
-    }).join("\n");
-
-    const deliveryFee = 500;
-    const totalWithDelivery = total > 0 ? total + deliveryFee : 0;
-
-    const orderedDate = new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-
-    const fullShippingAddress = liveAddress;
-
     try {
-      // ✅ SEND EMAIL FIRST
-      await emailjs.send(
-        "service_alm7rgg",
-        "template_efvm3i5",
-        {
-          name: formData.fullName,
-          phone: formData.phone,
-          email: formData.email,
-          address: fullShippingAddress,
-          order: orderItems,
-          total: totalWithDelivery,
-          date: orderedDate
-        },
-        "IdzwzMw0_Z1I4vmAn"
-      );
+      if (!validateForm()) {
+        return;
+      }
 
-      // ✅ SHOW SUCCESS UI
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        alert("Your order list is empty. Please add items to your cart before placing an order.");
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      // Call backend API for server-side order creation, validation, & notification pipeline
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          customerInfo: formData
+        })
+      });
+
+      const data = await res.json();
+      console.log("[Checkout Frontend] Server order response:", data);
+
+      if (!res.ok || !data.success) {
+        setIsSubmitting(false);
+        alert(data.error || "Failed to place order. Please check your information and try again.");
+        return;
+      }
+
+      const generatedOrderId = data.orderId || `PG-ORD-${Date.now().toString(36).toUpperCase()}`;
+      setPlacedOrderId(generatedOrderId);
+      setNotificationResults(data.notifications || null);
+
+      // Also trigger browser EmailJS as client fallback if email is provided
+      if (formData.email) {
+        try {
+          const deliveryFee = 500;
+          const computedSubtotal = items.reduce((sum, item: any) => {
+            const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
+            const q = Math.max(1, Number(item?.quantity) || 1);
+            return sum + p * q;
+          }, 0);
+          const totalWithDelivery = computedSubtotal > 0 ? computedSubtotal + deliveryFee : 0;
+          const orderedDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const orderItemsSummary = items.map((item: any) => {
+            const p = typeof item?.price === "number" ? item.price : Number(String(item?.price || 0).replace(/[^0-9.]/g, "")) || 0;
+            const q = Math.max(1, Number(item?.quantity) || 1);
+            const details = [
+              item?.selectedSize ? `Size: ${item.selectedSize}` : null,
+              item?.selectedColor ? `Color: ${item.selectedColor}` : null,
+              `Qty: ${q}`
+            ].filter(Boolean).join(", ");
+            return `${item?.name || "Item"} (${details}) - Rs.${p.toLocaleString()}`;
+          }).join("\n");
+
+          await emailjs.send(
+            "service_alm7rgg",
+            "template_efvm3i5",
+            {
+              name: formData.fullName,
+              phone: formData.phone,
+              email: formData.email,
+              address: liveAddress,
+              order: `Order ID: ${generatedOrderId}\n\n${orderItemsSummary}`,
+              total: totalWithDelivery,
+              date: orderedDate
+            },
+            "IdzwzMw0_Z1I4vmAn"
+          );
+        } catch (emailErr) {
+          console.warn("[Checkout Frontend] Optional client EmailJS notification attempt:", emailErr);
+        }
+      }
+
+      // Clear the shopping cart
+      clearCart();
+      setIsSubmitting(false);
       setShowSuccess(true);
 
-      // ✅ WHATSAPP MESSAGE
-      const message = `🛒 *New Order*
-
-Date: ${orderedDate}
-Name: ${formData.fullName}
-Phone: ${formData.phone}
-Email: ${formData.email || "N/A"}
-
-Order Details:
-
-${orderItems}
-
-Shipping Address:
-${fullShippingAddress}
-
-Subtotal: Rs.${total.toLocaleString()}
-Delivery Fee: Rs.${deliveryFee}
-Total: Rs.${totalWithDelivery.toLocaleString()}`;
-
-      const whatsappUrl = `https://wa.me/94776706481?text=${encodeURIComponent(message)}`;
-
-      setTimeout(() => {
-        window.open(whatsappUrl, "_blank");
-        setShowSuccess(false);
-      }, 1500);
-
-    } catch (error) {
-      console.error(error);
-      alert("Failed to send order. Please try again.");
+    } catch (err) {
+      setIsSubmitting(false);
+      console.error("[Checkout Frontend] Error in handleProceedToPay:", err);
+      alert("An unexpected error occurred while placing your order. Please try again.");
     }
   };
 
@@ -235,18 +251,48 @@ Total: Rs.${totalWithDelivery.toLocaleString()}`;
     <main className="bg-[#f5f1eb] min-h-screen flex flex-col relative">
       <Navbar />
 
-      {/* Success Message Overlay */}
+      {/* Order Placed Successfully Modal */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl text-center transform scale-105 transition-transform duration-300">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-check text-green-600 text-3xl"></i>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 transition-all duration-300">
+          <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-2xl text-center border border-[#d6c9b5] transform scale-100 transition-all duration-300">
+            <div className="w-16 h-16 bg-[#e8decb] text-[#7a2e2e] rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+              <i className="fa-solid fa-circle-check text-4xl text-[#c5a35d]"></i>
             </div>
-            <h3 className="text-2xl font-serif font-bold text-[#7a2e2e] mb-2">Order placed!</h3>
-            <p className="text-gray-600">Redirecting to WhatsApp...</p>
-            <div className="mt-6 flex justify-center">
-              <div className="w-8 h-8 border-4 border-[#c5a35d] border-t-transparent rounded-full animate-spin"></div>
+            
+            <h3 className="text-2xl font-serif font-bold text-[#7a2e2e] mb-2">
+              🎉 Order Placed Successfully!
+            </h3>
+            
+            <div className="bg-[#f5f1eb] py-2 px-4 rounded-lg inline-block text-[13px] font-mono text-[#5a5a5a] mb-4 border border-[#d6c9b5]">
+              Order ID: <span className="font-bold text-black">{placedOrderId}</span>
             </div>
+
+            <p className="text-gray-700 text-[14px] leading-relaxed mb-4">
+              Thank you for your purchase! Your order has been received successfully.
+            </p>
+
+            <div className="bg-[#e8f0fe] p-3.5 rounded-lg text-left text-[12.5px] text-[#1c3d5a] space-y-2 mb-6 border border-[#b6d4fe]">
+              {formData.email ? (
+                <p className="flex items-center gap-2">
+                  <i className="fa-solid fa-envelope text-[#c5a35d]"></i>
+                  <span>A confirmation email has been sent to <strong>{formData.email}</strong>.</span>
+                </p>
+              ) : null}
+              <p className="flex items-center gap-2">
+                <i className="fa-solid fa-circle-check text-green-600"></i>
+                <span>Our team has received your order notification and will contact you shortly.</span>
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowSuccess(false);
+                router.push("/products");
+              }}
+              className="w-full bg-[#c5a35d] text-[#7a2e2e] font-bold py-3.5 px-6 rounded-xl hover:bg-[#b8954f] hover:text-white transition shadow-md focus:outline-none text-[15px]"
+            >
+              Continue Shopping
+            </button>
           </div>
         </div>
       )}
@@ -562,9 +608,19 @@ Total: Rs.${totalWithDelivery.toLocaleString()}`;
 
             <button
               onClick={handleProceedToPay}
-              className="bg-[#c5a35d] w-full py-3.5 rounded-lg text-[#7a2e2e] font-bold text-[16px] hover:bg-[#b8954f] hover:text-white transition focus:outline-none"
+              disabled={isSubmitting}
+              className={`bg-[#c5a35d] w-full py-3.5 rounded-lg text-[#7a2e2e] font-bold text-[16px] hover:bg-[#b8954f] hover:text-white transition focus:outline-none flex items-center justify-center gap-2 ${
+                isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+              }`}
             >
-              Proceed to Pay
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-[#7a2e2e] border-t-transparent rounded-full animate-spin"></div>
+                  <span>Placing Order...</span>
+                </>
+              ) : (
+                "Place the Order"
+              )}
             </button>
 
           </div>
