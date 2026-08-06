@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/components/CartContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, ChangeEvent } from "react";
+import { getColorName } from "@/utils/colorUtils";
 
 function CheckoutContent() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -200,8 +201,8 @@ function CheckoutContent() {
       message += `\n• ${item.name || "Item"}\n`;
       message += `  Quantity: ${q}\n`;
       if (item.selectedSize) message += `  Size: ${item.selectedSize}\n`;
-      if (item.selectedColor) message += `  Body Color: ${item.selectedColor}\n`;
-      if (item.inkColor) message += `  Ink Color: ${item.inkColor}\n`;
+      if (item.selectedColor) message += `  Color: ${getColorName(item.selectedColor)}\n`;
+      if (item.inkColor) message += `  Ink Color: ${getColorName(item.inkColor)}\n`;
       if (item.penType) message += `  Pen Type: ${item.penType}\n`;
       if (item.personalization) message += `  Personalization: ${item.personalization}\n`;
       message += `  Price: Rs. ${(p * q).toLocaleString()}\n`;
@@ -221,7 +222,7 @@ function CheckoutContent() {
     const orderMessage = generateOrderMessage();
     
     const encodedMessage = encodeURIComponent(orderMessage);
-    const whatsappUrl = `https://wa.me/94760364639?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/94776706481?text=${encodedMessage}`;
 
     window.open(whatsappUrl, '_blank');
 
@@ -514,11 +515,11 @@ function CheckoutContent() {
                           )}
                           {item.selectedColor && (
                             <span className="flex items-center gap-1">
-                              <span className="font-semibold text-[#7a2e2e]">Color:</span>
+                              <span className="font-semibold text-[#7a2e2e]">Color:</span> {getColorName(item.selectedColor)}
                               <span
-                                className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle"
+                                className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle ml-1"
                                 style={{ backgroundColor: item.selectedColor }}
-                                title={item.selectedColor}
+                                title={getColorName(item.selectedColor)}
                               />
                             </span>
                           )}

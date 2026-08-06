@@ -6,6 +6,7 @@ import { useCart } from "@/components/CartContext";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getColorName } from "@/utils/colorUtils";
 
 export default function CartPage() {
   const router = useRouter();
@@ -118,11 +119,11 @@ export default function CartPage() {
                             )}
                             {item.selectedColor && (
                               <span className="flex items-center gap-1">
-                                <span className="font-semibold text-[#7a2e2e]">Color:</span>
+                                <span className="font-semibold text-[#7a2e2e]">Color:</span> {getColorName(item.selectedColor)}
                                 <span
-                                  className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle"
+                                  className="w-3.5 h-3.5 rounded-full border border-gray-400 inline-block align-middle ml-1"
                                   style={{ backgroundColor: item.selectedColor }}
-                                  title={item.selectedColor}
+                                  title={getColorName(item.selectedColor)}
                                 />
                               </span>
                             )}
