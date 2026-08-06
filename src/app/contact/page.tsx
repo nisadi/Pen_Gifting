@@ -45,7 +45,7 @@ export default function Contact() {
       );
   };
   return (
-    <main className="bg-[#15043a] text-white min-h-screen">
+    <main className="bg-[#070115] text-white min-h-screen">
 
       {/* NAVBAR */}
       <Navbar />
