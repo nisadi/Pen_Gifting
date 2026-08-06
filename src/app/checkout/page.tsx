@@ -222,7 +222,7 @@ function CheckoutContent() {
     const orderMessage = generateOrderMessage();
     
     const encodedMessage = encodeURIComponent(orderMessage);
-    const whatsappUrl = `https://wa.me/94776706481?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/94713515220?text=${encodedMessage}`;
 
     window.open(whatsappUrl, '_blank');
 
