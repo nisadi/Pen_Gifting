@@ -2,7 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 
 export default function Home() {
@@ -16,6 +16,11 @@ export default function Home() {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeBrandIndex, setActiveBrandIndex] = useState(0);
+  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
+
+  const brandCarouselRef = useRef<HTMLDivElement>(null);
+  const testimonialCarouselRef = useRef<HTMLDivElement>(null);
 
   // AUTO SLIDE
   useEffect(() => {
@@ -25,6 +30,50 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleBrandScroll = () => {
+    if (!brandCarouselRef.current) return;
+    const el = brandCarouselRef.current;
+    const scrollPosition = el.scrollLeft;
+    const card = el.children[0] as HTMLElement;
+    if (card) {
+      const cardWidth = card.offsetWidth + 16;
+      const index = Math.round(scrollPosition / cardWidth);
+      setActiveBrandIndex(Math.min(Math.max(index, 0), 2));
+    }
+  };
+
+  const scrollToBrand = (index: number) => {
+    if (!brandCarouselRef.current) return;
+    const el = brandCarouselRef.current;
+    const card = el.children[index] as HTMLElement;
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setActiveBrandIndex(index);
+    }
+  };
+
+  const handleTestimonialScroll = () => {
+    if (!testimonialCarouselRef.current) return;
+    const el = testimonialCarouselRef.current;
+    const scrollPosition = el.scrollLeft;
+    const card = el.children[0] as HTMLElement;
+    if (card) {
+      const cardWidth = card.offsetWidth + 16;
+      const index = Math.round(scrollPosition / cardWidth);
+      setActiveTestimonialIndex(Math.min(Math.max(index, 0), 3));
+    }
+  };
+
+  const scrollToTestimonial = (index: number) => {
+    if (!testimonialCarouselRef.current) return;
+    const el = testimonialCarouselRef.current;
+    const card = el.children[index] as HTMLElement;
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setActiveTestimonialIndex(index);
+    }
+  };
 
   return (
     <main className="bg-[#f5f1eb] text-gray-800">
@@ -100,18 +149,33 @@ export default function Home() {
 
       </section>
 
-      {/* PRODUCTS */}
-      <section className="px-4 sm:px-6 md:px-10 pt-12 md:pt-16 pb-8 md:pb-12 bg-[#d6cec4]">
-        <div className="text-center mb-10 md:mb-12">
+      {/* PRODUCTS / OUR BRANDS */}
+      <section className="px-4 sm:px-6 md:px-10 pt-12 md:pt-16 pb-8 md:pb-12 bg-[#d6cec4] overflow-hidden">
+        <div className="text-center mb-8 md:mb-12">
           <h2 className="text-[28px] md:text-[30px] font-serif font-bold text-[#7b1e22]">
             Our Brands
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-12 justify-items-center">
+        {/* Mobile Swipe Hint */}
+        <div className="flex md:hidden justify-center items-center gap-1.5 text-xs text-[#7b1e22]/80 font-medium mb-3">
+          <span>Swipe to explore brands</span>
+          <span className="animate-pulse">→</span>
+        </div>
+
+        <div
+          ref={brandCarouselRef}
+          onScroll={handleBrandScroll}
+          role="region"
+          aria-label="Our Brands Carousel"
+          className="flex md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-10 mb-6 md:mb-12 justify-start md:justify-items-center overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar px-2 sm:px-0 py-2"
+        >
 
           {/* CARD 1 */}
-          <div className="group relative w-full max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md">
+          <div
+            tabIndex={0}
+            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
+          >
 
             <img
               src="/card1.png"
@@ -129,14 +193,15 @@ export default function Home() {
                 Experience refined craftsmanship with Waterman Paris, where luxury meets precision. Designed for smooth, effortless writing and finished with sophisticated detailing, each pen is perfect for meaningful gifting. Personalize it with custom engraving to create a gift that leaves a lasting impression.
               </p>
 
-
-
             </div>
 
           </div>
 
           {/* CARD 2 */}
-          <div className="group relative w-full max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md">
+          <div
+            tabIndex={0}
+            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
+          >
 
             <img
               src="/card2.png"
@@ -154,14 +219,15 @@ export default function Home() {
                 Renowned for its heritage and innovation, Parker pens represent timeless style and exceptional craftsmanship. With smooth performance and refined finishes, each pen is designed to deliver a superior writing experience. Personalize it with custom engraving to create a distinguished gift that speaks of success and sophistication.
               </p>
 
-
-
             </div>
 
           </div>
 
           {/* CARD 3 */}
-          <div className="group relative w-full max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md">
+          <div
+            tabIndex={0}
+            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
+          >
 
             <img
               src="/card3.png"
@@ -179,12 +245,26 @@ export default function Home() {
                 A symbol of excellence and prestige, Montblanc pens embody master craftsmanship and timeless elegance. Meticulously crafted with premium materials and iconic design, each piece delivers an unmatched writing experience. Personalize your Montblanc pen with custom engraving to create a truly distinguished gift that reflects success, refinement, and lasting legacy.
               </p>
 
-
-
             </div>
 
           </div>
 
+        </div>
+
+        {/* Mobile Pagination Dots */}
+        <div className="flex md:hidden justify-center items-center gap-2 mb-8">
+          {[0, 1, 2].map((idx) => (
+            <button
+              key={idx}
+              onClick={() => scrollToBrand(idx)}
+              aria-label={`Go to brand slide ${idx + 1}`}
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                activeBrandIndex === idx
+                  ? "w-7 bg-[#7b1e22]"
+                  : "w-2.5 bg-[#7b1e22]/30 hover:bg-[#7b1e22]/50"
+              }`}
+            />
+          ))}
         </div>
 
         {/* Brand logos */}
@@ -194,17 +274,29 @@ export default function Home() {
 
       </section>
       {/* TESTIMONIALS */}
-      <section id="testimonials" className="px-4 sm:px-6 md:px-10 pt-8 md:pt-10 pb-16 md:pb-20 text-center relative">
+      <section id="testimonials" className="px-4 sm:px-6 md:px-10 pt-8 md:pt-10 pb-16 md:pb-20 text-center relative overflow-hidden">
 
         <h3 className="text-xl md:pt-5 md:text-3xl font-semibold mb-2 font-serif">
           Testimonials
         </h3>
 
-        <p className="text-xs sm:text-sm text-yellow-700 mb-8 md:mb-12">
+        <p className="text-xs sm:text-sm text-yellow-700 mb-6 md:mb-12">
           What our customers saying about us.
         </p>
 
-        <div className="grid grid-cols-1 md:pt-5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10 max-w-[1200px] mx-auto">
+        {/* Mobile Swipe Hint */}
+        <div className="flex md:hidden justify-center items-center gap-1.5 text-xs text-yellow-800 font-medium mb-3">
+          <span>Swipe to read reviews</span>
+          <span className="animate-pulse">→</span>
+        </div>
+
+        <div
+          ref={testimonialCarouselRef}
+          onScroll={handleTestimonialScroll}
+          role="region"
+          aria-label="Testimonials Carousel"
+          className="flex md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-10 max-w-[1200px] mx-auto overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar px-2 sm:px-0 py-4 justify-start md:justify-items-center"
+        >
 
           {[
             { name: "Michael T.", img: "/user1.png", text: "From ordering to delivery, the experience was seamless. The packaging alone felt premium, and the pen writes beautifully. Highly recommend for anyone looking for a memorable gift." },
@@ -215,7 +307,8 @@ export default function Home() {
 
             <div
               key={i}
-              className="bg-[#B8AFA6] p-4 sm:p-6 rounded-xl shadow-[8px_10px_0px_rgba(180,120,120,0.3)] hover:shadow-[10px_14px_0px_rgba(180,120,120,0.4)] transition duration-300 w-full max-w-[260px] mx-auto text-left"
+              tabIndex={0}
+              className="bg-[#B8AFA6] p-4 sm:p-6 rounded-xl shadow-[8px_10px_0px_rgba(180,120,120,0.3)] hover:shadow-[10px_14px_0px_rgba(180,120,120,0.4)] transition duration-300 w-[82vw] max-w-[280px] md:w-full md:max-w-[260px] flex-shrink-0 snap-center md:snap-align-none mx-auto text-left flex flex-col justify-between min-h-[220px] focus:outline-none focus:ring-2 focus:ring-[#7a2e2e]"
             >
 
               <p className="text-xs sm:text-sm mb-6 sm:mb-8">"{user.text}"</p>
@@ -243,6 +336,22 @@ export default function Home() {
 
           ))}
 
+        </div>
+
+        {/* Mobile Pagination Dots */}
+        <div className="flex md:hidden justify-center items-center gap-2 mt-6">
+          {[0, 1, 2, 3].map((idx) => (
+            <button
+              key={idx}
+              onClick={() => scrollToTestimonial(idx)}
+              aria-label={`Go to testimonial slide ${idx + 1}`}
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                activeTestimonialIndex === idx
+                  ? "w-7 bg-[#7a2e2e]"
+                  : "w-2.5 bg-[#7a2e2e]/30 hover:bg-[#7a2e2e]/50"
+              }`}
+            />
+          ))}
         </div>
 
         <img

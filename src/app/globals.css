@@ -109,3 +109,12 @@ html {
   background: transparent;
   font-size: 14px;
 }
+
+/* Custom utility for hiding scrollbars in mobile carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
