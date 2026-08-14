@@ -20,8 +20,8 @@ const products = [
   {
     id: "pilot-custom-98",
     name: "Pilot Custom 98 – FK1MR",
-    price: "Rs.10,000",
-    priceValue: 10000,
+    price: "Rs.54,000",
+    priceValue: 54000,
     image: "/products/pilot-custom-98.png",
     colors: ["#000000", "#8b0000"],
     inkColors: ["#000000"],
@@ -32,8 +32,8 @@ const products = [
   {
     id: "lamy-safari",
     name: "Lamy Safari",
-    price: "Rs.10,000",
-    priceValue: 10000,
+    price: "Rs.16,500",
+    priceValue: 16500,
     image: "/products/lamy-safari.png",
     colors: ["#000000", "#0000ff", "#ff0000", "#ffffff"],
     inkColors: ["#0000ff"],
@@ -132,7 +132,7 @@ export default function ProductsPage() {
   ];
 
   const inkColorOptions = ["#000000", "#203d6c"];
-  const maxPriceLimit = 50000;
+  const maxPriceLimit = 55000;
 
   const [selectedPenTypes, setSelectedPenTypes] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);

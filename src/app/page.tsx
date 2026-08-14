@@ -3,6 +3,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useState, useEffect, useRef } from "react";
+import { brands } from "@/data/brands";
 
 
 export default function Home() {
@@ -11,8 +12,10 @@ export default function Home() {
   const images = [
     "/hero1.png",
     "/hero2.png",
+    "/hero5.png",
     "/hero3.png",
     "/hero4.png",
+    "/hero6.png",
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,7 +29,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, []);
@@ -37,9 +40,9 @@ export default function Home() {
     const scrollPosition = el.scrollLeft;
     const card = el.children[0] as HTMLElement;
     if (card) {
-      const cardWidth = card.offsetWidth + 16;
+      const cardWidth = card.offsetWidth + 24;
       const index = Math.round(scrollPosition / cardWidth);
-      setActiveBrandIndex(Math.min(Math.max(index, 0), 2));
+      setActiveBrandIndex(Math.min(Math.max(index, 0), brands.length - 1));
     }
   };
 
@@ -170,90 +173,34 @@ export default function Home() {
           aria-label="Our Brands Carousel"
           className="flex md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-10 mb-6 md:mb-12 justify-start md:justify-items-center overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar px-2 sm:px-0 py-2"
         >
+          {brands.map((brand) => (
+            <div
+              key={brand.id}
+              tabIndex={0}
+              className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
+            >
+              <img
+                src={brand.image}
+                alt={brand.alt || brand.name}
+                className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+              />
 
-          {/* CARD 1 */}
-          <div
-            tabIndex={0}
-            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
-          >
+              <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center items-center text-center px-6">
+                <h3 className="text-[#d4af37] font-semibold text-lg mb-4 tracking-wide">
+                  {brand.name}
+                </h3>
 
-            <img
-              src="/card1.png"
-              alt="Lamy pen"
-              className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            />
-
-            <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center items-center text-center px-6">
-
-              <h3 className="text-[#d4af37] font-semibold text-lg mb-4 tracking-wide">
-                WATERMAN
-              </h3>
-
-              <p className="text-gray-200 text-sm leading-6 mb-6">
-                Experience refined craftsmanship with Waterman Paris, where luxury meets precision. Designed for smooth, effortless writing and finished with sophisticated detailing, each pen is perfect for meaningful gifting. Personalize it with custom engraving to create a gift that leaves a lasting impression.
-              </p>
-
+                <p className="text-gray-200 text-sm leading-6 mb-6">
+                  {brand.description}
+                </p>
+              </div>
             </div>
-
-          </div>
-
-          {/* CARD 2 */}
-          <div
-            tabIndex={0}
-            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
-          >
-
-            <img
-              src="/card2.png"
-              alt="Gift pen box"
-              className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            />
-
-            <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center items-center text-center px-6">
-
-              <h3 className="text-[#d4af37] font-semibold text-lg mb-4 tracking-wide">
-                PARKER
-              </h3>
-
-              <p className="text-gray-200 text-sm leading-6 mb-6">
-                Renowned for its heritage and innovation, Parker pens represent timeless style and exceptional craftsmanship. With smooth performance and refined finishes, each pen is designed to deliver a superior writing experience. Personalize it with custom engraving to create a distinguished gift that speaks of success and sophistication.
-              </p>
-
-            </div>
-
-          </div>
-
-          {/* CARD 3 */}
-          <div
-            tabIndex={0}
-            className="group relative w-[82vw] max-w-[320px] sm:w-full sm:max-w-[340px] h-[260px] sm:h-[300px] md:h-[320px] lg:h-[340px] rounded-xl overflow-hidden shadow-md flex-shrink-0 snap-center md:snap-align-none focus:outline-none focus:ring-2 focus:ring-[#7b1e22]"
-          >
-
-            <img
-              src="/card3.png"
-              alt="Pelikan pen"
-              className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            />
-
-            <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center items-center text-center px-6">
-
-              <h3 className="text-[#d4af37] font-semibold text-lg mb-4 tracking-wide">
-                MONT BLANC
-              </h3>
-
-              <p className="text-gray-200 text-sm leading-6 mb-6">
-                A symbol of excellence and prestige, Montblanc pens embody master craftsmanship and timeless elegance. Meticulously crafted with premium materials and iconic design, each piece delivers an unmatched writing experience. Personalize your Montblanc pen with custom engraving to create a truly distinguished gift that reflects success, refinement, and lasting legacy.
-              </p>
-
-            </div>
-
-          </div>
-
+          ))}
         </div>
 
         {/* Mobile Pagination Dots */}
         <div className="flex md:hidden justify-center items-center gap-2 mb-8">
-          {[0, 1, 2].map((idx) => (
+          {brands.map((_, idx) => (
             <button
               key={idx}
               onClick={() => scrollToBrand(idx)}
@@ -364,7 +311,7 @@ export default function Home() {
 
       {/* WHATSAPP FLOAT BUTTON */}
       <a
-        href="https://wa.me/94713515220"
+        href="https://wa.me/94760661733"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-4 sm:right-6 z-50"

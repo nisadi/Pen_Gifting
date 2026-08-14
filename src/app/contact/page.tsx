@@ -149,7 +149,7 @@ export default function Contact() {
               <div className="bg-[#c6a55c] w-14 h-14 flex items-center justify-center rounded-full">
                 <img src="/contact/phone.png" className="w-6 h-6" />
               </div>
-              <p className="font-semibold text-base md:text-lg break-all">0742947133</p>
+              <p className="font-semibold text-base md:text-lg break-all">076 066 1733</p>
             </div>
             <p className="text-sm text-gray-300 leading-6">
               Give us a call for quick assistance on orders, customizations, or any urgent inquiries.
