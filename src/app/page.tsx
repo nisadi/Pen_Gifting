@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* HERO SLIDER */}
       <section className="w-full pt-0">
-        <div className="w-full h-[80vh] overflow-hidden shadow-lg relative">
+        <div className="w-full h-[220px] min-[400px]:h-[260px] sm:h-[360px] md:h-[500px] lg:h-[80vh] max-h-[850px] overflow-hidden shadow-lg relative">
 
           <div
             className="flex h-full transition-transform duration-1000 ease-in-out"
@@ -98,7 +98,8 @@ export default function Home() {
               <div key={index} className="w-full h-full flex-shrink-0">
                 <img
                   src={img}
-                  className="w-full h-full object-cover block"
+                  alt={`Hero banner slide ${index + 1}`}
+                  className="w-full h-full object-cover object-center block"
                 />
               </div>
             ))}
